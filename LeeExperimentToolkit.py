@@ -1,10 +1,5 @@
 from itertools import combinations
-
-from sklearn import preprocessing
 from sklearn.model_selection import cross_val_score
-from sklearn.datasets import load_breast_cancer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 import numpy as np
 import random
