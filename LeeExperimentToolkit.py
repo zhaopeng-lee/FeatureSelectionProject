@@ -159,11 +159,12 @@ class PerformanceHandler :
                     feature_n_combination.append(list_randomdim)
                 else:
                     continue
-            for lists in feature_n_combination:
-                for i in list_feature_selected:
-                    lists.append(i)
+            if list_feature_selected != []:
+                for lists in feature_n_combination:
+                    for i in list_feature_selected:
+                        lists.append(i)
             feature_array = np.array(feature_n_combination,dtype = object)
-            #del feature_n_combination
+            del feature_n_combination
             #******
             #change the dataset into onehot representation
             #******
