@@ -19,18 +19,27 @@ class PerformanceHandler :
         feature_n_combination = []#list to store all combination
         list_feature_num =[]#list to store all features' num
         list_features_CVmeans = []#list to return with all feature num and its associated CV mean value
+        dimention_of_feature = len(trainning_set.columns)
         #******
         # data preprocessing
         #******
         list_feature_selected = input("please input the features' number \
-            that are relavant to the classes").split(",")
-        if len(list_feature_selected) >= dimention_of_subset:
-            print("the dimension of subset must be larger than the numbers of feature selected")
+            that are relavant to the classes")
+        print(list_feature_selected)
+        if list_feature_selected != '':
+            list_feature_selected = list_feature_selected.split(',')
+            list_feature_selected = [int(i) for i in list_feature_selected]
+        else:
+            list_feature_selected = []
         list_feature_dropped = input("please input the features' number\
-            that are irrelavant").split(",")
-        list_feature_selected = [int(i) for i in list_feature_selected]
-        list_feature_dropped = [int(i) for i in list_feature_dropped]
-        for i in range(len(trainning_set.columns)):
+            that are irrelavant")
+        if list_feature_dropped != '':
+            list_feature_dropped = list_feature_dropped.split(',')
+            list_feature_dropped = [int(i) for i in list_feature_dropped]
+        else:
+            list_feature_dropped = []
+        #******
+        for i in range(dimention_of_feature):
             list_feature_num.append(i)
         list_feature_num = [i for i in list_feature_num if i not in list_feature_selected and i not in list_feature_dropped]
         feature_n_combination_tuple = list(combinations(list_feature_num,dimention_of_subset-len(list_feature_selected)))
@@ -59,13 +68,23 @@ class PerformanceHandler :
         # if needed generate accuracy class
         #******
         list_accuracy_class = []
-        for i in range(number_of_iter):
-            accuracy = list_frame.iloc[i,dimention_of_subset]
+        for i in range(len(list_features_CVmeans)):
+            accuracy = list_features_CVmeans[i][-1]
             if accuracy > 0.95:
-                list_accuracy_class.append(3)
+                list_accuracy_class.append(8)
             elif accuracy > 0.9:
-                list_accuracy_class.append(2)
+                list_accuracy_class.append(7)
             elif accuracy > 0.85:
+                list_accuracy_class.append(6)
+            elif accuracy > 0.8:
+                list_accuracy_class.append(5)
+            elif accuracy > 0.75:
+                list_accuracy_class.append(4)
+            elif accuracy > 0.7:
+                list_accuracy_class.append(3)
+            elif accuracy > 0.65:
+                list_accuracy_class.append(2)
+            elif accuracy > 0.6:
                 list_accuracy_class.append(1)
             else:
                 list_accuracy_class.append(0)
@@ -81,11 +100,11 @@ class PerformanceHandler :
         else:
             return list_frame
 
-    def encodingFeature_withOnehot (X_features,feature_num:'int'):
+    def encodingFeature_withOnehot (X_features,original_feature_num:'int'):
         """this function can encode the numTypefeature dataframe to a onehotType dataframe"""
         list_final = []
-        for i in range(len(X_features.iloc[:,0])):
-            list_tem = [0 for i in range(feature_num)]
+        for i in range(len(X_features)):
+            list_tem = [0 for i in range(original_feature_num)]
             for num in X_features.iloc[i,:]:
                 list_tem[num]=1
             list_final.append(list_tem)
