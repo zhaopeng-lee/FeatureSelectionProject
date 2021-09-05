@@ -114,11 +114,19 @@ class PerformanceHandler :
             # data preprocessing
             #******
             list_feature_selected = input("please input the features' number \
-                that are relavant to the classes").split(",")
+                that are relavant to the classes")
+            if list_feature_selected != '':
+                list_feature_selected = list_feature_selected.split(',')
+                list_feature_selected = [int(i) for i in list_feature_selected]
+            else:
+                list_feature_selected = []
             list_feature_dropped = input("please input the features' number\
-                that are irrelavant").split(",")
-            list_feature_selected = [int(i) for i in list_feature_selected]
-            list_feature_dropped = [int(i) for i in list_feature_dropped]
+                that are irrelavant")
+            if list_feature_dropped != '':
+                list_feature_dropped = list_feature_dropped.split(',')
+                list_feature_dropped = [int(i) for i in list_feature_dropped]
+            else:
+                list_feature_dropped = []
             #******
             # generate the possible feature set - list_feature_num
             # generate possible combination which contain the feature selectet
@@ -127,7 +135,10 @@ class PerformanceHandler :
                 list_feature_num.append(i)
             list_feature_num = [i for i in list_feature_num if i not in list_feature_selected and i not in list_feature_dropped]
             for i in range(number_of_iter):
-                randomdimension = random.randint(0,len(list_feature_num))
+                if list_feature_selected != []:
+                    randomdimension = random.randint(0,len(list_feature_num))
+                else:
+                    randomdimension = random.randint(1,len(list_feature_num))
                 list_randomdim = random.sample(list_feature_num,randomdimension)
                 if list_randomdim not in feature_n_combination:
                     feature_n_combination.append(list_randomdim)
@@ -136,23 +147,24 @@ class PerformanceHandler :
             for lists in feature_n_combination:
                 for i in list_feature_selected:
                     lists.append(i)
+            feature_array = np.array(feature_n_combination,dtype = object)
+            #del feature_n_combination
             #******
             #change the dataset into onehot representation
             #******
-            for i in range(len(feature_n_combination)):
+            for i in range(len(feature_array)):
                 list_tem = [0 for i in range(dimension_of_feature)]
-                for num in range(len(feature_n_combination[i])):
-                    list_tem[feature_n_combination[i][num]]=1
+                for num in range(len(feature_array[i])):
+                    list_tem[feature_array[i][num]]=1
                 feature_n_combination_onehot.append(list_tem)
-            print(feature_n_combination_onehot[0:5])
             #******
             # train every subsets and calculate CV mean value
             #******
             y_Iter = class_set
             clf = mod
-            for i in range(len(feature_n_combination)):
+            for i in range(len(feature_array)):
                 try:
-                    X_Iterate = trainning_set.iloc[:,feature_n_combination[i]]
+                    X_Iterate = trainning_set.iloc[:,feature_array[i]]
                     scores = cross_val_score(clf, X_Iterate, y_Iter, cv=5,n_jobs=-1)
                     list_tem = feature_n_combination_onehot[i]
                     list_tem.append(scores.mean())
