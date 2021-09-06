@@ -100,7 +100,7 @@ class PerformanceHandler :
         else:
             return list_frame
 
-    def encodingFeature_withOnehot (X_features,original_feature_num:'int'):
+    def Featurenum_to_Onehot (X_features,original_feature_num:'int'):
         """this function can encode the numTypefeature dataframe to a onehotType dataframe"""
         list_final = []
         for i in range(len(X_features)):
@@ -223,3 +223,45 @@ class PerformanceHandler :
                 return X_iter,y_iter
             else:
                 return list_frame
+
+    def pool_generator (X_initial,size_of_pool:"int"):
+        """this function can provide different feature subset compare to the input set,
+        you should pass in onehot version of X, and the output is also in a onehot version"""
+        list_X_initial = []
+        dimention_of_feature = len(X_initial.columns)
+        generate_feature_set = []
+        list_feature_num = [i for i in range(dimention_of_feature)]
+        for i in range(len(X_initial)):
+            list_tem = X_initial.iloc[i,:]
+            list_X_initial_each = []
+            for num in range(len(list_tem)):
+                if list_tem[num] == 1:
+                    list_X_initial_each.append(num)
+                
+            list_X_initial.append(sorted(list_X_initial_each))
+            #print(list_X_initial)
+        
+        for i in range(size_of_pool):
+            randomnum = random.randint(1,dimention_of_feature)
+            feature_randomdim = random.sample(list_feature_num,randomnum)
+            feature_randomdim.sort()
+            if feature_randomdim not in list_X_initial and feature_randomdim not in generate_feature_set:
+                generate_feature_set.append(feature_randomdim)  
+        list_final = []
+        for i in range(len(generate_feature_set)):
+            list_tem = [0 for i in range(dimention_of_feature)]
+            for num in generate_feature_set[i]:
+                list_tem[num]=1
+            list_final.append(list_tem)
+        return pd.DataFrame(list_final)
+
+    def Onehot_to_Featurenum(X_initial):
+        list_X_initial = []
+        for i in range(len(X_initial)):
+            list_tem = X_initial.iloc[i,:]
+            list_X_initial_each = []
+            for num in range(len(list_tem)):
+                if list_tem[num] == 1:
+                    list_X_initial_each.append(num)
+            list_X_initial.append(sorted(list_X_initial_each))
+        return np.array(list_X_initial)
