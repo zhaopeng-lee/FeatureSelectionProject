@@ -1,16 +1,24 @@
 from itertools import combinations
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from modAL.models import ActiveLearner
+from modAL.uncertainty import uncertainty_sampling
 import pandas as pd
 import numpy as np
 import random
 class PerformanceHandler :
     """this class is aiming to handle the performance problem"""
-    def train_dataset_with_nd_features(
+    #******
+    #this is a static dimension sampling function, take original data as input
+    #output a sequence of n dimensional feature set and its associated CV mean value
+    #******
+    def Sampling_nd_featuresets(
         dimention_of_subset:'int',
         trainning_set,
         class_set,
         mod,
         number_of_iter,
+        N_classes,
         return_X_y:'bool'=True,
         return_classes:'bool'=True):
         """this function can take a X and y as input, train it with mod, test the model with
@@ -70,24 +78,7 @@ class PerformanceHandler :
         list_accuracy_class = []
         for i in range(len(list_features_CVmeans)):
             accuracy = list_features_CVmeans[i][-1]
-            if accuracy > 0.95:
-                list_accuracy_class.append(8)
-            elif accuracy > 0.9:
-                list_accuracy_class.append(7)
-            elif accuracy > 0.85:
-                list_accuracy_class.append(6)
-            elif accuracy > 0.8:
-                list_accuracy_class.append(5)
-            elif accuracy > 0.75:
-                list_accuracy_class.append(4)
-            elif accuracy > 0.7:
-                list_accuracy_class.append(3)
-            elif accuracy > 0.65:
-                list_accuracy_class.append(2)
-            elif accuracy > 0.6:
-                list_accuracy_class.append(1)
-            else:
-                list_accuracy_class.append(0)
+            list_accuracy_class.append(PerformanceHandler.Change_float_into_classes(accuracy,1,N_classes))
         list_frame[dimention_of_subset+1] = list_accuracy_class
         if return_X_y and return_classes:
             X_iter = list_frame.iloc[:,0:dimention_of_subset]
@@ -99,7 +90,9 @@ class PerformanceHandler :
             return X_iter,y_iter
         else:
             return list_frame
-
+    #******
+    #this function can change a dataframe type feature num set to onehot representation
+    #******
     def Featurenum_to_Onehot (X_features,original_feature_num:'int'):
         """this function can encode the numTypefeature dataframe to a onehotType dataframe"""
         list_final = []
@@ -109,12 +102,16 @@ class PerformanceHandler :
                 list_tem[num]=1
             list_final.append(list_tem)
         return pd.DataFrame(list_final)
-
-    def train_dataset_with_random_features(
+    #******
+    #this is a random dimension sampling function, take original data as input
+    #output a sequence of random dimensional feature set and its associated CV mean value
+    #******
+    def Sampling_randomd_featuresets(
             trainning_set,
             class_set,
             mod,
             number_of_iter,
+            N_classes,
             return_X_y:'bool'=True,
             return_classes:'bool'=True):
             """this function can take a X and y as input, train it with mod, test the model with
@@ -194,24 +191,8 @@ class PerformanceHandler :
             list_accuracy_class = []
             for i in range(len(list_features_CVmeans)):
                 accuracy = list_features_CVmeans[i][-1]
-                if accuracy > 0.95:
-                    list_accuracy_class.append(8)
-                elif accuracy > 0.9:
-                    list_accuracy_class.append(7)
-                elif accuracy > 0.85:
-                    list_accuracy_class.append(6)
-                elif accuracy > 0.8:
-                    list_accuracy_class.append(5)
-                elif accuracy > 0.75:
-                    list_accuracy_class.append(4)
-                elif accuracy > 0.7:
-                    list_accuracy_class.append(3)
-                elif accuracy > 0.65:
-                    list_accuracy_class.append(2)
-                elif accuracy > 0.6:
-                    list_accuracy_class.append(1)
-                else:
-                    list_accuracy_class.append(0)
+                list_accuracy_class.append(PerformanceHandler.Change_float_into_classes(accuracy,1,N_classes))
+    
             list_frame[dimension_of_feature+1] = list_accuracy_class
             if return_X_y and return_classes:
                 X_iter = list_frame.iloc[:,0:dimension_of_feature]
@@ -224,6 +205,9 @@ class PerformanceHandler :
             else:
                 return list_frame
 
+    #******
+    #this function takes feature set with onehot representation, and output a pool of different onehot set
+    #******
     def pool_generator (X_initial,size_of_pool:"int"):
         """this function can provide different feature subset compare to the input set,
         you should pass in onehot version of X, and the output is also in a onehot version"""
@@ -254,7 +238,9 @@ class PerformanceHandler :
                 list_tem[num]=1
             list_final.append(list_tem)
         return pd.DataFrame(list_final)
-
+    #******
+    #reverse transform as Featurenum_to_Onehot
+    #******
     def Onehot_to_Featurenum(X_initial):
         list_X_initial = []
         for i in range(len(X_initial)):
@@ -265,3 +251,47 @@ class PerformanceHandler :
                     list_X_initial_each.append(num)
             list_X_initial.append(sorted(list_X_initial_each))
         return np.array(list_X_initial)
+    #******
+    #this function can change float type of metric into classes
+    #******
+    def Change_float_into_classes(Num, Max_num, N_classes):
+        return int(Num/(Max_num/N_classes))
+    #******
+    #this function takes in feature set as X, and accuracy set as y, a pool of other feature set
+    #and use active learning to quickly enhenced the model
+    #******
+    def Use_AL_to_train_featureset(X,y,N_originalset,N_queries,size_of_pool,N_classes,Original_Trainning_model,Feature_Trainning_model):
+        Feature_set,Metric_set = PerformanceHandler.Sampling_randomd_featuresets(X,y,Original_Trainning_model,N_originalset,N_classes)
+        X_train,X_test,y_train,y_test = train_test_split(Feature_set,Metric_set,test_size=0.5)
+        X_pool = PerformanceHandler.pool_generator(Feature_set,size_of_pool)
+        X_pool = np.array(X_pool)
+        X_train =np.array(X_train)
+        y_train = np.array(y_train)
+        X_test =np.array(X_test)
+        y_test = np.array(y_test)
+        learner = ActiveLearner(estimator=Feature_Trainning_model,X_training=X_train,y_training=y_train)
+        unqueried_score = [learner.score(X_test, y_test)]
+        performance_history = [unqueried_score]
+        for index in range(N_queries):
+            query_index, query_instance = learner.query(X_pool)
+            list_tem = query_instance.tolist()
+            list_tem = list_tem[0]
+            list_feature_num = []
+            for num in range(len(list_tem)):
+                if list_tem[num] == 1:
+                    list_feature_num.append(num)
+            # Teach our ActiveLearner model the record it has requested.
+            X_Iterate = X.iloc[:,list_feature_num]
+            y_new = PerformanceHandler.Change_float_into_classes(cross_val_score(estimator=Original_Trainning_model,X = X_Iterate,y = y,cv=5,n_jobs=-1).mean(),1,N_classes)
+            X_1, y_1 = X_pool[query_index], np.array([y_new])
+            learner.teach(X=X_1, y=y_1)
+            #print(learner.y_training)
+            # Remove the queried instance from the unlabeled pool.
+            X_pool = np.delete(X_pool, query_index, axis=0)
+            # Calculate and report our model's accuracy.
+            model_accuracy = learner.score(X_test, y_test)
+            print('Accuracy after query {n}: {acc:0.4f}'.format(n=index + 1, acc=model_accuracy))
+
+            # Save our model's performance for plotting.
+            performance_history.append(model_accuracy)
+        return learner
