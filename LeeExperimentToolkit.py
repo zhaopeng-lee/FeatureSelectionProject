@@ -272,12 +272,23 @@ class PerformanceHandler :
     #this function can change float type of metric into classes
     #******
     def Change_float_into_classes(Num, Max_num, N_classes):
+        """this function can change float type accuracy to classes"""
         return int(Num/(Max_num/N_classes))
     #******
     #this function takes in feature set as X, and accuracy set as y, a pool of other feature set
     #and use active learning to quickly enhenced the model
     #******
-    def Use_AL_to_train_featureset(X,y,N_originalset,N_queries,size_of_pool,N_classes,Original_Trainning_model,Feature_Trainning_model):
+    def Use_AL_to_train_featureset(
+    X,
+    y,
+    N_originalset,
+    N_queries,size_of_pool,
+    N_classes,
+    Original_Trainning_model,
+    Feature_Trainning_model):
+        """this function takes original dataset as input, and output a fully trained learner 
+        to predict accuracy based on different feature sets"""
+    
         Feature_set,Metric_set = PerformanceHandler.Sampling_randomd_featuresets(X,y,Original_Trainning_model,N_originalset,N_classes)
         X_train,X_test,y_train,y_test = train_test_split(Feature_set,Metric_set,test_size=0.5)
         X_pool = PerformanceHandler.pool_generator(Feature_set,size_of_pool)
@@ -312,3 +323,10 @@ class PerformanceHandler :
             # Save our model's performance for plotting.
             performance_history.append(model_accuracy)
         return learner
+
+    def Sum_feature_amount(X_onehot):
+        """take onehot representation as input, ouput the number of features"""
+        list_sum = []
+        for i in range(len(X_onehot)):
+            list_sum.append(X_onehot.iloc[i,:].sum())
+        return list_sum
