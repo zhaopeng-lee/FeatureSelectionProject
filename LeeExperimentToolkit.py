@@ -102,6 +102,18 @@ class PerformanceHandler :
                 list_tem[num]=1
             list_final.append(list_tem)
         return pd.DataFrame(list_final)
+
+    def powerset(seq):
+        """
+        Returns all the subsets of this set. This is a generator.
+        """
+        if len(seq) <= 1:
+            yield seq
+            yield []
+        else:
+            for item in PerformanceHandler.powerset(seq[1:]):
+                yield [seq[0]]+item
+                yield item
     #******
     #this is a random dimension sampling function, take original data as input
     #output a sequence of random dimensional feature set and its associated CV mean value
@@ -146,20 +158,25 @@ class PerformanceHandler :
             for i in range(dimension_of_feature):
                 list_feature_num.append(i)
             list_feature_num = [i for i in list_feature_num if i not in list_feature_selected and i not in list_feature_dropped]
-            for i in range(number_of_iter):
+            if number_of_iter == 'all':
+                c =list(PerformanceHandler.powerset(list_feature_num))
+                c.remove([])
+                feature_n_combination = c
+            else:
+                for i in range(number_of_iter):
+                    if list_feature_selected != []:
+                        randomdimension = random.randint(0,len(list_feature_num))
+                    else:
+                        randomdimension = random.randint(1,len(list_feature_num))
+                    list_randomdim = random.sample(list_feature_num,randomdimension)
+                    if list_randomdim not in feature_n_combination:
+                        feature_n_combination.append(list_randomdim)
+                    else:
+                        continue
                 if list_feature_selected != []:
-                    randomdimension = random.randint(0,len(list_feature_num))
-                else:
-                    randomdimension = random.randint(1,len(list_feature_num))
-                list_randomdim = random.sample(list_feature_num,randomdimension)
-                if list_randomdim not in feature_n_combination:
-                    feature_n_combination.append(list_randomdim)
-                else:
-                    continue
-            if list_feature_selected != []:
-                for lists in feature_n_combination:
-                    for i in list_feature_selected:
-                        lists.append(i)
+                    for lists in feature_n_combination:
+                        for i in list_feature_selected:
+                            lists.append(i)
             feature_array = np.array(feature_n_combination,dtype = object)
             del feature_n_combination
             #******
