@@ -406,17 +406,17 @@ class PerformanceHandler:
     return_feature_bar:bool = True,
     performance_ranking:int= 4
     ):
+        feature_sum = self.Sum_feature_amount(self.feature_set)
+        list_feature_1 =[]
+        for i in range(len(feature_sum)):
+            list_tem = [feature_sum[i],self.performance_classes[i]]
+            list_feature_1.append(list_tem)
+        list_feature_2 = []
+        for i in range(1,len(self.X.columns)):
+            for num in range(self.performance_classes.min(),(self.performance_classes.max()+1)):
+                counter = list_feature_1.count([i,num])
+                list_feature_2.append([i,num,counter])
         if return_relationship_graph == True:
-            feature_sum = self.Sum_feature_amount(self.feature_set)
-            list_feature_1 =[]
-            for i in range(len(feature_sum)):
-                list_tem = [feature_sum[i],self.performance_classes[i]]
-                list_feature_1.append(list_tem)
-            list_feature_2 = []
-            for i in range(1,len(self.X.columns)):
-                for num in range(self.performance_classes.min(),(self.performance_classes.max()+1)):
-                    counter = list_feature_1.count([i,num])
-                    list_feature_2.append([i,num,counter])
             fig = plt.figure(figsize=(15,10))
             axes = fig.add_axes([0,0,1,1])
             axes.set_title('relationship between feature amount and performance')
@@ -456,8 +456,10 @@ class PerformanceHandler:
                 list_different_feature_sum.append(i)
                 list_frame_report.append(list_different_feature_sum)
                 frame = pd.DataFrame(list_frame_report)
-                frame.rename(columns={len(self.X.columns):'performance class'})
-            return frame
+                frame = frame.rename(columns={len(self.X.columns):'performance class'})
+                frame1 = pd.DataFrame(list_feature_2)
+                frame1 = frame1.rename(columns={0:'feature sum',1:'performance class',2:'counter'})
+            return frame,frame1
 
     def predict(self,Feature_list:list):
         array = np.array(self.feature_set)
@@ -468,7 +470,24 @@ class PerformanceHandler:
             if list(array[i])==a:
                 print(f'The accuracy class is {self.performance_classes[i]} and the accuracy is {self.performance_set[i]}')
                 break
+    def search_for_points(self, feature_sum:int=5,performance_class:int=27,auto_return:bool=True):
         
+        sum = pd.DataFrame(self.Sum_feature_amount(self.feature_set))
+        result = pd.concat([sum,self.performance_classes,\
+            self.performance_set],ignore_index=True, axis=1)
+        if auto_return == True:
+             performance_class = self.performance_classes.max()
+             frame_tem = result.loc[result[1] == performance_class]
+             feature_sum = frame_tem.iloc[:,0].min()
+        indices = list(result.index[(result[0]==feature_sum)&(result[1]==performance_class)])
+        print(indices)
+        for i in indices:
+            f = plt.figure(figsize=(7,7))
+            plt.title(f'which features did this model with {feature_sum} features and {performance_class} class use')
+            plt.xlabel('feature number')
+            plt.ylabel('With/Without this feature')
+            plt.bar(range(len(self.X.columns)),self.feature_set.loc[i,:])
+
                     
 
 
