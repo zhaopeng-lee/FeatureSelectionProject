@@ -217,9 +217,10 @@ class PerformanceHandler:
             for i in range(len(feature_array)):
                 try:
                     X_Iterate = self.X.iloc[:,feature_array[i]]
-                    scores = cross_val_score(clf, X_Iterate, y_Iter, cv=num_cv,n_jobs=-1)
+                    scores = cross_val_score(clf, X_Iterate, y_Iter, cv=num_cv,n_jobs=-1,error_score="raise")
                     list_tem = feature_n_combination_onehot[i]
                     list_tem.append(scores.mean())
+                    print(list_tem)
                     list_features_CVmeans.append(list_tem)
                     print(str(i)+'/'+str(len(feature_array)-1))
                 except:
@@ -415,7 +416,7 @@ class PerformanceHandler:
         for i in range(1,len(self.X.columns)):
             for num in range(self.performance_classes.min(),(self.performance_classes.max()+1)):
                 counter = list_feature_1.count([i,num])
-                list_feature_2.append([i,num,counter])
+                list_feature_2.append([i,num*(1/self.N_classes),counter])
         if return_relationship_graph == True:
             fig = plt.figure(figsize=(15,10))
             axes = fig.add_axes([0,0,1,1])
