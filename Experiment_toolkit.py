@@ -197,8 +197,13 @@ class PerformanceHandler:
                 list_feature_num.append(i)
             list_feature_num = [i for i in list_feature_num if i not in list_feature_selected and i not in list_feature_dropped]
             c =list(PerformanceHandler.powerset(list_feature_num))
-            c.remove([])
+            if list_feature_selected == []:
+                c.remove([])
             feature_n_combination = c
+            if list_feature_selected != []:
+                for lists in feature_n_combination:
+                    for i in list_feature_selected:
+                        lists.append(i)
             feature_array = np.array(feature_n_combination,dtype = object)
             del feature_n_combination
             #******
